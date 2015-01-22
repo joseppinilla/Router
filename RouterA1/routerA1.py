@@ -30,7 +30,7 @@ def main(argv):
     start_lives = 20
     
     fps = 1
-    color = graphics.color_rgb(25, 25, 112)
+    color = graphics.color_rgb(random.randrange(255),random.randrange(255), random.randrange(255))
     tickrate = 1 / fps
     scale = round(win_max / x_scale)
     ticker = tickrate
