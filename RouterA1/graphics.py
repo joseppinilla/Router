@@ -154,6 +154,7 @@ __version__ = "4.3"
 #     Added Entry boxes.
 
 import time, os, sys
+import textwrap
 
 
 try:  # import as appropriate for 2.x vs. 3.x
@@ -187,8 +188,7 @@ class GraphWin(tk.Canvas):
 
     """A GraphWin is a toplevel window for displaying graphics."""
 
-    def __init__(self, title="Graphics Window",
-                 width=200, height=200, autoflush=True):
+    def __init__(self, title="Graphics Window", width=200, height=200, autoflush=True):
         master = tk.Toplevel(_root)
         master.protocol("WM_DELETE_WINDOW", self.close)
         tk.Canvas.__init__(self, master, width=width, height=height)
@@ -576,7 +576,7 @@ class Rectangle(_BBox):
         other = Rectangle(self.p1, self.p2)
         other.config = self.config.copy()
         return other
-        
+            
 class Oval(_BBox):
     
     def __init__(self, p1, p2):
@@ -894,6 +894,11 @@ def color_rgb(r,g,b):
     """r,g,b are intensities of red, green, and blue in range(256)
     Returns color specifier string for the resulting color"""
     return "#%02x%02x%02x" % (r,g,b)
+
+def markBlock(win,rectangle,text):
+    t = Text(rectangle.getCenter(),text) 
+    t.draw(win)
+    return 0
 
 def test():
     win = GraphWin()
