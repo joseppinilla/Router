@@ -27,27 +27,11 @@ def start(win,blocks,nets):
                     if pinsVertex not in pinsVisited:
                         pinsVisited.add(pinsVertex) 
                         
-                        indexPin = routerGUI.getBlockInd(win,pinsVertex)
-                        tags = [0]*len(blocks)
-                        tags[indexPin] = 1
-
-                        blocksVisited, blocksQueue = set(), [pinsVertex]                      
+                        pathLen = bfsNB(win,pinsSrc,blocks,pinsVertex) 
+                        if (pathLen!=0):
+                            print "FOUND: TraceBack!", pathLen
+                            #TODO:Traceback
                         
-                        while blocksQueue:
-                            
-                            blocksVertex = blocksQueue.pop(0)                                                    
-                            if blocksVertex not in blocksVisited:
-                                blocksVisited.add(blocksVertex)
-                                
-                                print "vertex", blocksVertex
-                                index = routerGUI.getBlockInd(win,blocksVertex)        
-                                tag = tags[index]+1
-                                
-                                if (findNB(win,blocksVertex,pinsSrc,blocks,blocksQueue,tag,tags)!=0):
-                                    print "FOUND: TraceBack!"
-                                    break
-                           
-                            time.sleep(0.1)
                             
                         print "Finished Blocks Queue"                        
                     print "Finished pin"
@@ -55,17 +39,36 @@ def start(win,blocks,nets):
             print "Finished net"
     
 
-def findNB(win,blocksVertex,pinsSrc,blocks,blocksQueue,tag,tags):
-    for neighbour in routerGUI.getBlockNB(blocksVertex):
-        if pinsSrc == neighbour:
-            return 1
-        indexNB = routerGUI.getBlockInd(win,neighbour)
-        if ((blocks[indexNB][1] | tags[indexNB]) == 0):
-            tags[indexNB] = tag
-            routerGUI.markBlock(win,blocks[indexNB][0],tag)
-            print "Neighbour", neighbour
-            blocksQueue.append(neighbour)
-            #TODO: elif Look for wire of same net, connect to it
+def bfsNB(win,pinsSrc,blocks,pinsVertex):
+
+    indexPin = routerGUI.getBlockInd(win,pinsVertex)
+    tags = [0]*len(blocks)
+    tags[indexPin] = 1
+
+    blocksVisited, blocksQueue = set(), [pinsVertex]                      
     
+    while blocksQueue:
+        
+        blocksVertex = blocksQueue.pop(0)                                                    
+        if blocksVertex not in blocksVisited:
+            blocksVisited.add(blocksVertex)
+            
+            print "vertex", blocksVertex
+            index = routerGUI.getBlockInd(win,blocksVertex)        
+            tag = tags[index]+1
+            
+            for neighbour in routerGUI.getBlockNB(blocksVertex):
+                if pinsSrc == neighbour:
+                    return tag
+                indexNB = routerGUI.getBlockInd(win,neighbour)
+                if ((blocks[indexNB][1] | tags[indexNB]) == 0):
+                    tags[indexNB] = tag
+                    routerGUI.markBlock(win,blocks[indexNB][0],tag)
+                    print "Neighbour", neighbour
+                    blocksQueue.append(neighbour)
+                    #TODO: elif Look for wire of same net, connect to it
+       
+        time.sleep(0.1)
+       
     return 0
 
