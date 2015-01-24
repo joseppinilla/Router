@@ -11,7 +11,7 @@ def drawRouter(fin,blocks,nets):
     x_size = int(tmpList[0])
     global y_size 
     y_size = int(tmpList[1])
-    win_max_x = 1000
+    win_max_x = 1200
     win_max_y = (win_max_x*y_size)/x_size
     scale_x = round(win_max_x / x_size)
     scale_y = round(win_max_y / y_size) 
