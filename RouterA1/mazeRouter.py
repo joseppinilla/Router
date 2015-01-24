@@ -6,36 +6,45 @@ import time
 
 #TODO: change all representation of blocks XandY to tuples
 
-def start(win,blocks,nets):
-    while (True):
-        key = win.getKey()
-        if key == 'q': #quit 
-            break
-        #if key == 's': #step          
-        if key == 'r': #run
-            for netCnt,net in enumerate(nets):
-                #TODO: Routing order by input file appearance, change to left-edge or other
-                pins = net[2]             
-                pinsVisited, pinsQueue = set(), []
-                pinsQueue.extend(pins)
-                pinsSrc = pinsQueue.pop(0)
-                pinsVisited.clear()
-           
-                while pinsQueue:                  
-                    
-                    pinsVertex = pinsQueue.pop(0)                   
-                    if pinsVertex not in pinsVisited:
-                        pinsVisited.add(pinsVertex) 
-                        
-                        tags = [0]*len(blocks)
-                        pathLen = bfsNB(win,pinsSrc,blocks,pinsVertex,tags) 
-                        if (pathLen!=0):
-                            traceBack(win,pinsSrc,pathLen,blocks,tags,net)
-                            #TODO:Traceback
-                    
-                print "Finished pins"  
-            print "Finished nets"
+def start(win,blocks,nets,mode):
+
+    for netCnt,net in enumerate(nets):
+        #TODO: Routing order by input file appearance, change to left-edge or other
+        pins = net[2]             
+        pinsVisited, pinsQueue = set(), []
+        pinsQueue.extend(pins)
+        pinsSrc = pinsQueue.pop(0)
+        pinsVisited.clear()
+        wireLen = 0
     
+    
+        #CONNECT ALL PINS
+        while pinsQueue:                  
+            pinsVertex = pinsQueue.pop(0)                   
+            if pinsVertex not in pinsVisited:
+                pinsVisited.add(pinsVertex) 
+                
+                tags = [0]*len(blocks)
+                pathLen, matchBlock = bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode)
+                
+                if (matchBlock):
+                    targetBlock = matchBlock
+                    pinsQueue.append(pinsSrc)
+                else:
+                    targetBlock = pinsSrc
+                 
+                if (pathLen!=0):
+                    traceBack(win,targetBlock,pathLen,blocks,tags,net)
+                    #TODO:Traceback
+                
+            wireLen += (pathLen-2)
+        #PINS CONNECTED
+         
+        net[3] = wireLen
+        print "Finished pins"
+          
+    print "Finished nets"
+
 
 #Trace Back over tags
 def traceBack(win,pinsSrc,pathLen,blocks,tags,net):
@@ -60,7 +69,7 @@ def traceBack(win,pinsSrc,pathLen,blocks,tags,net):
         
 
 # Breadth First search starting on pin Vertex looking for pin Source
-def bfsNB(win,pinsSrc,blocks,pinsVertex,tags):
+def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode):
 
     indexPin = routerGUI.getBlockInd(win,pinsVertex)
     tags[indexPin] = 1
@@ -77,16 +86,34 @@ def bfsNB(win,pinsSrc,blocks,pinsVertex,tags):
             tag = tags[index]+1
             
             for neighbour in routerGUI.getBlockNB(blocksVertex):
-                if pinsSrc == neighbour:
-                    return tag
                 indexNB = routerGUI.getBlockInd(win,neighbour)
-                if ((blocks[indexNB][1] | tags[indexNB]) == 0):
-                    tags[indexNB] = tag
-                    #routerGUI.markBlock(win,blocks[indexNB][0],tag)
-                    blocksQueue.append(neighbour)
-                    #TODO: elif Look for wire of same net, connect to it
+                stateNB = blocks[indexNB][1]
+                if (tags[indexNB] == 0):
+                    if (stateNB == 0):
+                        tags[indexNB] = tag
+                        routerGUI.markBlock(win,blocks[indexNB][0],tag)
+                        blocksQueue.append(neighbour)
+                        #TODO: A* tag with manhattan distance |xc-xt|+|yc-yt|
+                    elif (stateNB == net[0]):
+                        print "On net ", net[0]
+                        print "StateNB ", stateNB
+                        return tag, neighbour
        
-        #time.sleep(0.1)
        
-    return 0
+        #Run mode (clocked, stepped)
+        key = win.checkKey()
+        if (key == 'c'):
+            mode = 'r'      
+        if (mode.isdigit()):
+            time.sleep(int(mode)*0.1)
+        if (mode=='s'):
+            while (key != 's'):
+                key = win.getKey()
+                if (key == 'c'):
+                    mode = 'r'
+                    break
+            
+            
+       
+    return 0, None
 

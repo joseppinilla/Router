@@ -42,7 +42,7 @@ def drawRouter(fin,blocks,nets):
     
     for i in range(0,netCnt):
         color = graphics.color_rgb(random.randrange(255),random.randrange(255),random.randrange(255))
-        net = [i,color]
+        net = [i+1,color,[],0,[]]
         tmpList = fin.readline().split()
         pinCnt = int(tmpList[0])
         pins = []
@@ -55,7 +55,7 @@ def drawRouter(fin,blocks,nets):
             blocks[index][1] = i+1
             pins.append(pin)
         
-        net.append(pins)
+        net[2]=(pins)
         nets.append(net)
     
     return win
@@ -100,7 +100,7 @@ def printGridStates(blocks):
         if blockCnt%x_size == 0:
             print "/" 
         print block[1], "\t",
-        
+    print ""  
         
 #Print grid matrix
 def printGridTags(blocks,net):
@@ -109,3 +109,6 @@ def printGridTags(blocks,net):
         if blockCnt%x_size == 0:
             print "/" 
         print block[2], "\t",
+    print ""
+        
+        
