@@ -23,8 +23,8 @@ def drawRouter(fin,blocks,nets):
     
             point1 = graphics.Point(cut2, cut)
             point2 = graphics.Point(cut2 - scale_x, cut - scale_y)
-            #block : Corresponding graphics, 0(free)/-1(obs)/X(net#)], tag
-            block = [graphics.Rectangle(point1, point2),0, 0]
+            #block : Corresponding graphics, 0(free)/-1(obs)/X(net#)]
+            block = [graphics.Rectangle(point1, point2),0]
             block[0].draw(win)
             blocks.append(block)
     
@@ -32,7 +32,7 @@ def drawRouter(fin,blocks,nets):
     obs = int(fin.readline())
     for ob in range(0,obs):       
         tmpList  = fin.readline().split()
-        index = getBlockInd(win,int(tmpList[0]),int(tmpList[1]))
+        index = getBlockInd(win,(int(tmpList[0]),int(tmpList[1])))
         
         blocks[index][0].setFill(graphics.color_rgb(0,0,255))
         blocks[index][1] = -1
@@ -48,7 +48,7 @@ def drawRouter(fin,blocks,nets):
         pins = []
         for j in range(0,pinCnt):
             offset = (j*2)+1
-            index = getBlockInd(win,int(tmpList[offset]),int(tmpList[offset+1]))
+            index = getBlockInd(win,(int(tmpList[offset]),int(tmpList[offset+1])))
             pin = (int(tmpList[offset]),int(tmpList[offset+1]))
             blocks[index][0].setFill(net[1])
             markBlock(win,blocks[index][0],i+1)
@@ -61,9 +61,11 @@ def drawRouter(fin,blocks,nets):
     return win
 
 #Get Coordinates of Neighbour Blocks
-def getBlockNB(x,y):
+def getBlockNB(block):
     global x_size
     global y_size
+    x=block[0]
+    y=block[1]
     #TODO: Order of given neighbours is fixed, could be changed
     neighbours = []
     
@@ -85,8 +87,10 @@ def markBlock(win,rectangle,text):
     return 0
 
 #Convert Coordinates to BlockList Index
-def getBlockInd(win,x,y):
+def getBlockInd(win,block):
     global x_size
+    x = block[0]
+    y = block[1]
     return (y*x_size)+x
 
 #Print grid matrix
@@ -96,3 +100,12 @@ def printGridStates(blocks):
         if blockCnt%x_size == 0:
             print "/" 
         print block[1], "\t",
+        
+        
+#Print grid matrix
+def printGridTags(blocks,net):
+    for blockCnt, block in enumerate(blocks):
+        global x_size
+        if blockCnt%x_size == 0:
+            print "/" 
+        print block[2], "\t",
