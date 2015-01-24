@@ -4,6 +4,7 @@ import random
 x_size = 0
 y_size = 0
 
+state = {'free':0,'obs':-1,'wire':1,'pin':2}
 
 def drawRouter(fin,blocks,nets):
     tmpList = fin.readline().split()
@@ -23,8 +24,8 @@ def drawRouter(fin,blocks,nets):
     
             point1 = graphics.Point(cut2, cut)
             point2 = graphics.Point(cut2 - scale_x, cut - scale_y)
-            #block : Corresponding graphics, 0(free)/-1(obs)/X(net#)]
-            block = [graphics.Rectangle(point1, point2),0]
+            #block : Rectangle, state, net,subnet
+            block = [graphics.Rectangle(point1, point2),0,0,0]
             block[0].draw(win)
             blocks.append(block)
     
@@ -35,7 +36,7 @@ def drawRouter(fin,blocks,nets):
         index = getBlockInd(win,(int(tmpList[0]),int(tmpList[1])))
         
         blocks[index][0].setFill(graphics.color_rgb(0,0,255))
-        blocks[index][1] = -1
+        blocks[index][1] = state['obs']
     
     #Draw pins, Create nets[wires]
     netCnt = int(fin.readline())
@@ -52,10 +53,12 @@ def drawRouter(fin,blocks,nets):
             pin = (int(tmpList[offset]),int(tmpList[offset+1]))
             blocks[index][0].setFill(net[1])
             markBlock(win,blocks[index][0],i+1)
-            blocks[index][1] = i+1
+            #Block represents a pin in (net,subnet)
+            blocks[index][1] = state['pin']
+            blocks[index][2] = i+1
             pins.append(pin)
         
-        net[2]=(pins)
+        net[2] = pins
         nets.append(net)
     
     return win
@@ -93,7 +96,7 @@ def getBlockInd(win,block):
     y = block[1]
     return (y*x_size)+x
 
-#Print grid matrix
+#Print grid matrix of States
 def printGridStates(blocks):
     for blockCnt, block in enumerate(blocks):
         global x_size
@@ -102,13 +105,13 @@ def printGridStates(blocks):
         print block[1], "\t",
     print ""  
         
-#Print grid matrix
-def printGridTags(blocks,net):
-    for blockCnt, block in enumerate(blocks):
+#Print grid matrix of Tags
+def printGridTags(tags):
+    for tagCnt, tag in enumerate(tags):
         global x_size
-        if blockCnt%x_size == 0:
+        if tagCnt%x_size == 0:
             print "/" 
-        print block[2], "\t",
+        print tag, "\t",
     print ""
         
         

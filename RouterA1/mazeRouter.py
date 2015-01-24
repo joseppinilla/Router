@@ -4,11 +4,11 @@ import graphics
 import routerGUI
 import time
 
-#TODO: change all representation of blocks XandY to tuples
+state = {'free':0,'obs':-1,'wire':1,'pin':2}
 
 def start(win,blocks,nets,mode):
 
-    for netCnt,net in enumerate(nets):
+    for net in nets:
         #TODO: Routing order by input file appearance, change to left-edge or other
         pins = net[2]             
         pinsVisited, pinsQueue = set(), []
@@ -17,10 +17,18 @@ def start(win,blocks,nets,mode):
         pinsVisited.clear()
         wireLen = 0
     
+        #Subnet
+        subnets = net[4]
+        subnets.append([pinsSrc])
+        subnets.append(0)
+        indexSrc = routerGUI.getBlockInd(win,pinsSrc)
+        blocks[indexSrc][3] = 1
     
         #CONNECT ALL PINS
         while pinsQueue:                  
-            pinsVertex = pinsQueue.pop(0)                   
+            
+            pinsVertex = pinsQueue.pop(0)
+                
             if pinsVertex not in pinsVisited:
                 pinsVisited.add(pinsVertex) 
                 
@@ -28,14 +36,26 @@ def start(win,blocks,nets,mode):
                 pathLen, matchBlock = bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode)
                 
                 if (matchBlock):
-                    targetBlock = matchBlock
-                    pinsQueue.append(pinsSrc)
-                else:
-                    targetBlock = pinsSrc
-                 
-                if (pathLen!=0):
-                    traceBack(win,targetBlock,pathLen,blocks,tags,net)
-                    #TODO:Traceback
+                    indexMatch = routerGUI.getBlockInd(win,matchBlock)
+                    
+                    if (blocks[indexMatch][3]):
+                        subnets
+                    else 
+                
+                for subnet in subnets:
+                    if (matchBlock in subnet):
+                             
+                #===============================================================
+                # if (matchBlock):
+                #     targetBlock = matchBlock
+                #     pinsQueue.append(pinsSrc)
+                # else:
+                #     targetBlock = pinsSrc
+                #  
+                # if (pathLen!=0):
+                #     traceBack(win,targetBlock,pathLen,blocks,tags,net)
+                #===============================================================
+
                 
             wireLen += (pathLen-2)
         #PINS CONNECTED
@@ -62,7 +82,8 @@ def traceBack(win,pinsSrc,pathLen,blocks,tags,net):
             
             if (tags[indexNB]==(pathLen)):
                 blocks[indexNB][0].setFill(net[1])
-                blocks[indexNB][1] = net[0]
+                blocks[indexNB][1] = state['wire']
+                blocks[indexNB][2] = net[0]
                 track = neighbour
                 break
 
@@ -71,6 +92,7 @@ def traceBack(win,pinsSrc,pathLen,blocks,tags,net):
 # Breadth First search starting on pin Vertex looking for pin Source
 def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode):
 
+    
     indexPin = routerGUI.getBlockInd(win,pinsVertex)
     tags[indexPin] = 1
 
@@ -88,13 +110,14 @@ def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode):
             for neighbour in routerGUI.getBlockNB(blocksVertex):
                 indexNB = routerGUI.getBlockInd(win,neighbour)
                 stateNB = blocks[indexNB][1]
+                netNB = blocks[indexNB][2]
                 if (tags[indexNB] == 0):
-                    if (stateNB == 0):
+                    if (stateNB == state['free']):
                         tags[indexNB] = tag
                         routerGUI.markBlock(win,blocks[indexNB][0],tag)
                         blocksQueue.append(neighbour)
-                        #TODO: A* tag with manhattan distance |xc-xt|+|yc-yt|
-                    elif (stateNB == net[0]):
+                        #TODO: A* tag with manhattan distance |xc-xt|+|yc-yt|                   
+                    elif (netNB == net[0]):
                         print "On net ", net[0]
                         print "StateNB ", stateNB
                         return tag, neighbour

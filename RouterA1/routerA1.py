@@ -23,17 +23,13 @@ def main(argv):
             inputfile = arg
         elif opt in ("-o", "--ofile"):
             outputfile = arg
-
-    print 'Input file is "', inputfile
-    print 'Output file is "', outputfile
-    
+   
     fin = open(inputfile,'r') 
        
     #Draw window with grid. Create blocks and nets   
     blocks = []
     nets = []
     win = routerGUI.drawRouter(fin,blocks,nets)
-    routerGUI.printGridStates(blocks)
     while (True):
         key = win.getKey()
         if key == 'q': #quit 
@@ -42,7 +38,6 @@ def main(argv):
             if (key=='t'):
                 key = win.getKey()
             mazeRouter.start(win,blocks,nets,key)
-            routerGUI.printGridStates(blocks)
             for net in nets:
                 print "Wire Len ", net[0], net[3]
     

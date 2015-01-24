@@ -1,7 +1,9 @@
 blocks[]
 	block[0]
 		rectangle
-		state
+		state {free:0,obs:-1,wire:1,pin:2}
+		net
+		subnet
 		
 		
 tags[]
@@ -20,6 +22,5 @@ nets[]
 			subnet[0]
 				pins[]
 					pin[0]
-					(x,y)
+						(x,y)
 				pcenter
-		
