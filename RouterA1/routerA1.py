@@ -3,6 +3,7 @@ import time
 import sys
 import getopt
 import mazeRouter
+import routerGUI
 
 
 def main(argv):
@@ -31,7 +32,7 @@ def main(argv):
     #Draw window with grid. Create blocks and nets   
     blocks = []
     nets = []
-    win = graphics.drawRouter(fin,blocks,nets)
+    win = routerGUI.drawRouter(fin,blocks,nets)
 
 
     mazeRouter.start(win,blocks,nets)
