@@ -7,6 +7,19 @@ import time
 state = {'free':0,'obs':-1,'wire':1,'pin':2}
 
 def start(win,blocks,nets,mode):
+    """Start maze router process iterating over nets to create subnets
+        BLOCK:
+        PIN:
+        NET: 
+        WIRE:
+        TAG:
+        SUBNET:
+        FREE:
+        SOURCE:
+        VERTEX:
+        NEIGHBOUR:
+        
+        """
 
     for net in nets:
         #TODO: Routing order by input file appearance, change to left-edge or other
@@ -19,11 +32,10 @@ def start(win,blocks,nets,mode):
     
         #Subnet
         subnets = net[4]
-        subnets.append([pinsSrc])
-        subnets.append(0)
+        subnets.append([[pinsSrc],1]) #TODO: Change initialize pcenter 1 => value that is useful
         indexSrc = routerGUI.getBlockInd(win,pinsSrc)
         blocks[indexSrc][3] = 1
-    
+       
         #CONNECT ALL PINS
         while pinsQueue:                  
             
@@ -37,45 +49,47 @@ def start(win,blocks,nets,mode):
                 
                 if (matchBlock):
                     indexMatch = routerGUI.getBlockInd(win,matchBlock)
-                    
-                    if (blocks[indexMatch][3]):
-                        subnets
-                    else 
-                
-                for subnet in subnets:
-                    if (matchBlock in subnet):
+                      
+                    subnetNum = blocks[indexMatch][3]
+                    if (subnetNum):
+                        #Add vertex to subnet pins list
+                        subnets[subnetNum-1][0].append(pinsVertex)
+                    else:
+                        #Found terminal of same net. Create subnet with terminals
+                        subnetNum = len(subnets)+1
+                        subnets.append([[pinsVertex,matchBlock],subnetNum]) #TODO: change index data to pcenter #TODO:Change so that only pinMatch is added not netMatch
+                        blocks[indexMatch][3] = subnetNum
                              
-                #===============================================================
-                # if (matchBlock):
-                #     targetBlock = matchBlock
-                #     pinsQueue.append(pinsSrc)
-                # else:
-                #     targetBlock = pinsSrc
-                #  
-                # if (pathLen!=0):
-                #     traceBack(win,targetBlock,pathLen,blocks,tags,net)
-                #===============================================================
-
+                    if (pathLen!=0):
+                        traceBack(win,matchBlock,pathLen,blocks,tags,net,subnetNum)
+                             
                 
             wireLen += (pathLen-2)
         #PINS CONNECTED
+        
+        #CONNECT ALL SUBNETS IF ANY
+        #if (len(subnets))
+        
+        #SUBNETS CONNECTED
+        
+        
          
+        print "Result", subnets
         net[3] = wireLen
         print "Finished pins"
           
     print "Finished nets"
 
 
-#Trace Back over tags
-def traceBack(win,pinsSrc,pathLen,blocks,tags,net):
-    print "TRACEBACK!", pathLen
-    
-    track = pinsSrc
-    
+
+def traceBack(win,trackBlk,pathLen,blocks,tags,net,subnet):
+    """Trace Back over tags by expanding around trackBlk. Mark blocks: Color, state:'wire', net, and subnet"""
+        
     while(pathLen!=1):
 
         pathLen -= 1
-        neighbours = routerGUI.getBlockNB(track)
+        
+        neighbours = routerGUI.getBlockNB(trackBlk)
 
         for neighbour in neighbours:
             indexNB = routerGUI.getBlockInd(win,neighbour)
@@ -84,14 +98,15 @@ def traceBack(win,pinsSrc,pathLen,blocks,tags,net):
                 blocks[indexNB][0].setFill(net[1])
                 blocks[indexNB][1] = state['wire']
                 blocks[indexNB][2] = net[0]
-                track = neighbour
+                blocks[indexNB][3] = subnet #TODO: This is not adding subnets to sink and src 
+                trackBlk = neighbour
                 break
 
         
 
-# Breadth First search starting on pin Vertex looking for pin Source
-def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode):
 
+def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode):
+    """ Breadth First search starting on pin Vertex looking for pin Source """
     
     indexPin = routerGUI.getBlockInd(win,pinsVertex)
     tags[indexPin] = 1
@@ -118,8 +133,6 @@ def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode):
                         blocksQueue.append(neighbour)
                         #TODO: A* tag with manhattan distance |xc-xt|+|yc-yt|                   
                     elif (netNB == net[0]):
-                        print "On net ", net[0]
-                        print "StateNB ", stateNB
                         return tag, neighbour
        
        

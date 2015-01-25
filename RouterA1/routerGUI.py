@@ -7,6 +7,12 @@ y_size = 0
 state = {'free':0,'obs':-1,'wire':1,'pin':2}
 
 def drawRouter(fin,blocks,nets):
+    """From input file:
+        Draw grid, obstacles and net pins
+        Fill blocks list
+        Fill nets list
+        Uses graphics.py
+    """
     tmpList = fin.readline().split()
     global x_size
     x_size = int(tmpList[0])
@@ -53,7 +59,7 @@ def drawRouter(fin,blocks,nets):
             pin = (int(tmpList[offset]),int(tmpList[offset+1]))
             blocks[index][0].setFill(net[1])
             markBlock(win,blocks[index][0],i+1)
-            #Block represents a pin in (net,subnet)
+
             blocks[index][1] = state['pin']
             blocks[index][2] = i+1
             pins.append(pin)
@@ -63,13 +69,14 @@ def drawRouter(fin,blocks,nets):
     
     return win
 
-#Get Coordinates of Neighbour Blocks
+
 def getBlockNB(block):
+    """Get Coordinates of Neighbour Blocks"""
     global x_size
     global y_size
     x=block[0]
     y=block[1]
-    #TODO: Order of given neighbours is fixed, could be changed
+    #TODO: Order of returned neighbours is fixed, could be changed
     neighbours = []
     
     if x > 0:
@@ -83,30 +90,58 @@ def getBlockNB(block):
     
     return neighbours
 
-#Write tag on block
+
 def markBlock(win,rectangle,text):
+    """Write tag on block"""
     t = graphics.Text(rectangle.getCenter(),text) 
     t.draw(win)
     return 0
 
-#Convert Coordinates to BlockList Index
+
 def getBlockInd(win,block):
+    """Convert Coordinates to BlockList Index"""
     global x_size
     x = block[0]
     y = block[1]
     return (y*x_size)+x
 
-#Print grid matrix of States
+
 def printGridStates(blocks):
+    """Print grid matrix of States"""
+    print "========GRID OF STATES========="
     for blockCnt, block in enumerate(blocks):
         global x_size
         if blockCnt%x_size == 0:
             print "/" 
         print block[1], "\t",
     print ""  
+
+
+def printGridSubNets(blocks):
+    """Print grid matrix of SubNets"""
+    print "========GRID OF SUBNETS========="
+    for blockCnt, block in enumerate(blocks):
+        global x_size
+        if blockCnt%x_size == 0:
+            print "/" 
+        print block[3], "\t",
+    print ""  
+
+
+def printGridNets(blocks):
+    """Print grid matrix of Nets"""
+    print "========GRID OF NETS========="
+    for blockCnt, block in enumerate(blocks):
+        global x_size
+        if blockCnt%x_size == 0:
+            print "/" 
+        print block[2], "\t",
+    print ""  
         
-#Print grid matrix of Tags
+
 def printGridTags(tags):
+    """Print grid matrix of Tags"""
+    print "========GRID OF TAGS========="
     for tagCnt, tag in enumerate(tags):
         global x_size
         if tagCnt%x_size == 0:
