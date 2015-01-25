@@ -22,7 +22,6 @@ def start(win,blocks,nets,mode):
         """
 
     for net in nets:
-        #TODO: Routing order by input file appearance, change to left-edge or other
         pins = net[2]             
         pinsVisited, pinsQueue = set(), []
         pinsQueue.extend(pins)
@@ -32,7 +31,7 @@ def start(win,blocks,nets,mode):
     
         #Subnet
         subnets = net[4]
-        subnets.append([[pinsSrc],1]) #TODO: Change initialize pcenter 1 => value that is useful
+        subnets.append([[pinsSrc],(0,0)])
         indexSrc = routerGUI.getBlockInd(win,pinsSrc)
         blocks[indexSrc][3] = 1
        
@@ -45,31 +44,55 @@ def start(win,blocks,nets,mode):
                 pinsVisited.add(pinsVertex) 
                 
                 tags = [0]*len(blocks)
-                pathLen, matchBlock = bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode)
                 
-                if (matchBlock):
-                    indexMatch = routerGUI.getBlockInd(win,matchBlock)
-                      
-                    subnetNum = blocks[indexMatch][3]
-                    if (subnetNum):
-                        #Add vertex to subnet pins list
-                        subnets[subnetNum-1][0].append(pinsVertex)
-                    else:
-                        #Found terminal of same net. Create subnet with terminals
-                        subnetNum = len(subnets)+1
-                        subnets.append([[pinsVertex,matchBlock],subnetNum]) #TODO: change index data to pcenter #TODO:Change so that only pinMatch is added not netMatch
-                        blocks[indexMatch][3] = subnetNum
-                             
-                    if (pathLen!=0):
-                        traceBack(win,matchBlock,pathLen,blocks,tags,net,subnetNum)
+                vertexIndex = routerGUI.getBlockInd(win,pinsVertex)
+                #If block is not already on subnet
+                if (blocks[vertexIndex][3] == 0):                
+                    pathLen, matchBlock = bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,1000,mode)
+                
+                    if (matchBlock):
+                        indexMatch = routerGUI.getBlockInd(win,matchBlock)
+                          
+                        subnetNum = blocks[indexMatch][3]
+                        if (subnetNum):
+                            #Add vertex to subnet pins list
+                            subnets[subnetNum-1][0].append(pinsVertex)
+                            #TODO: Explore adding matchBlock to subnet and consider for closest subnet intra-subnet route
+                        else:
+                            #Found terminal of same net. Create subnet with terminals
+                            subnetNum = len(subnets)+1
+                            subnets.append([[pinsVertex,matchBlock],(0,0)])
+                            blocks[indexMatch][3] = subnetNum
+                                 
+                        if (pathLen!=0):
+                            traceBack(win,matchBlock,pathLen,blocks,tags,net,subnetNum)
                              
                 
             wireLen += (pathLen-2)
         #PINS CONNECTED
         
         #CONNECT ALL SUBNETS IF ANY
-        #if (len(subnets))
+
+        subnetCnt = len(subnets)
+        print subnetCnt, " SUBNETS!"
+        netCtr = findCenter(pins) #TODO: This is center of all net. Find center between subnets? Center between closest pins?
+
+        while (subnetCnt != 1) :
+            anchorBlock = closestBlock(subnets[subnetCnt-1][0],netCtr)
+            print "CENTER ", netCtr, "ANCHOR ", anchorBlock, "SUBNET ", subnetCnt
+            
+            tags = [0]*len(blocks)
+#             indexAnchor = routerGUI.getBlockInd(win,anchorBlock)
+#             subnetNum = blocks[indexAnchor][3]
+                        
+            pathLen, matchBlock = bfsNB(win,netCtr,blocks,anchorBlock,tags,net,subnetCnt,mode)
+            print pathLen , matchBlock
+            
+            if (matchBlock):
+                if (pathLen!=0):
+                    traceBack(win,matchBlock,pathLen,blocks,tags,net,subnetCnt)
         
+            subnetCnt -= 1
         #SUBNETS CONNECTED
         
         
@@ -81,6 +104,47 @@ def start(win,blocks,nets,mode):
     print "Finished nets"
 
 
+def closestBlock(netBlocks, targetBlock):
+    """"From a list of blocks, find closest Manhattan distance"""    
+    closestVal = abs(netBlocks[0][0] - targetBlock[0]) + abs(netBlocks[0][1] - targetBlock[1])
+    closest = netBlocks[0]
+    iterBlocks = iter(netBlocks)
+    next(iterBlocks)
+
+    for block in iterBlocks:
+        dist = abs(block[0] - targetBlock[0]) + abs(block[1] - targetBlock[1])
+        if (dist < closestVal):
+            closestVal = dist
+            closest = block
+    
+    return closest          
+
+
+def findCenter(netBlocks):
+    """Find block at the geometric center of the net"""
+    hiXVal, hiYVal = netBlocks[0][0], netBlocks[0][1]
+    
+    loXVal, loYVal = netBlocks[0][0], netBlocks[0][1]
+          
+    blockCnt = 1
+    for block in netBlocks:
+        if (block[0]>hiXVal):
+            hiXVal = block[0]
+            
+        elif (block[0]<loXVal):
+            loXVal = block[0]
+            
+            
+        if (block[1]>hiYVal):
+            hiYVal = block[1]
+            
+        elif (block[0]<loYVal):
+            loYVal = block[1]
+        blockCnt+=1
+    
+    #TODO: BFS around center to find non-obs, non-otherNet block
+    
+    return (int((loXVal+hiXVal)/2),int((loYVal+hiYVal)/2))
 
 def traceBack(win,trackBlk,pathLen,blocks,tags,net,subnet):
     """Trace Back over tags by expanding around trackBlk. Mark blocks: Color, state:'wire', net, and subnet"""
@@ -94,18 +158,16 @@ def traceBack(win,trackBlk,pathLen,blocks,tags,net,subnet):
         for neighbour in neighbours:
             indexNB = routerGUI.getBlockInd(win,neighbour)
             
+            #TODO: Do something so that if traceback finds wire from other subnet it connects 
             if (tags[indexNB]==(pathLen)):
                 blocks[indexNB][0].setFill(net[1])
                 blocks[indexNB][1] = state['wire']
                 blocks[indexNB][2] = net[0]
-                blocks[indexNB][3] = subnet #TODO: This is not adding subnets to sink and src 
+                blocks[indexNB][3] = subnet 
                 trackBlk = neighbour
                 break
 
-        
-
-
-def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode):
+def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,subnet,mode):
     """ Breadth First search starting on pin Vertex looking for pin Source """
     
     indexPin = routerGUI.getBlockInd(win,pinsVertex)
@@ -126,14 +188,16 @@ def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode):
                 indexNB = routerGUI.getBlockInd(win,neighbour)
                 stateNB = blocks[indexNB][1]
                 netNB = blocks[indexNB][2]
+                subnetNB = blocks[indexNB][3]
                 if (tags[indexNB] == 0):
                     if (stateNB == state['free']):
                         tags[indexNB] = tag
                         routerGUI.markBlock(win,blocks[indexNB][0],tag)
                         blocksQueue.append(neighbour)
-                        #TODO: A* tag with manhattan distance |xc-xt|+|yc-yt|                   
+                        #TODO: A* tag with Manhattan distance |xc-xt|+|yc-yt|                   
                     elif (netNB == net[0]):
-                        return tag, neighbour
+                        if (subnetNB != subnet):
+                            return tag, neighbour
        
        
         #Run mode (clocked, stepped)
@@ -152,4 +216,5 @@ def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode):
             
        
     return 0, None
+
 

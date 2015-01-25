@@ -64,6 +64,8 @@ def drawRouter(fin,blocks,nets):
             blocks[index][2] = i+1
             pins.append(pin)
         
+        #TODO: Sort pins different ways: [Src, closer1, closer2, closer3....], [Src, closerN, closerN-1...closer1]
+        #TODO: Sort so that Source is left-top-most, center, etc.
         net[2] = pins
         nets.append(net)
     
@@ -79,14 +81,14 @@ def getBlockNB(block):
     #TODO: Order of returned neighbours is fixed, could be changed
     neighbours = []
     
-    if x > 0:
-        neighbours.append((x-1,y))
-    if x < (x_size-1):
-        neighbours.append((x+1,y))
     if y > 0:
         neighbours.append((x,y-1))
     if y < (y_size-1):
         neighbours.append((x,y+1))
+    if x > 0:
+        neighbours.append((x-1,y))
+    if x < (x_size-1):
+        neighbours.append((x+1,y))
     
     return neighbours
 

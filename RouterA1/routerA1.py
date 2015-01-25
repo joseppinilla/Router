@@ -30,18 +30,21 @@ def main(argv):
     blocks = []
     nets = []
     win = routerGUI.drawRouter(fin,blocks,nets)
+    
+    key = win.getKey()
+    if key == 'q': #quit 
+        sys.exit()     
+    elif (key in ('r','s','t')):
+        if (key=='t'):
+            key = win.getKey()
+        mazeRouter.start(win,blocks,nets,key)
+        for net in nets:
+            print "Wire Len ", net[0], net[3]
+    
     while (True):
         key = win.getKey()
         if key == 'q': #quit 
-            sys.exit()     
-        elif (key in ('r','s','t')):
-            if (key=='t'):
-                key = win.getKey()
-            mazeRouter.start(win,blocks,nets,key)
-            for net in nets:
-                print "Wire Len ", net[0], net[3]
-    
-                   
+            sys.exit()                    
 
 if __name__ == "__main__":
     main(sys.argv[1:])		
