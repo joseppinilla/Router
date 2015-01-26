@@ -6,6 +6,8 @@ y_size = 0
 
 state = {'free':0,'obs':-1,'wire':1,'pin':2}
 
+tList = []
+
 def drawRouter(fin,blocks,nets):
     """From input file:
         Draw grid, obstacles and net pins
@@ -93,10 +95,16 @@ def getBlockNB(block):
     return neighbours
 
 
+def delMarks(win,blocks):
+    for mark in tList:
+        mark.undraw()
+
 def markBlock(win,rectangle,text):
     """Write tag on block"""
+    #TODO: save t text objetc to undraw later on graphics.delitem(win,t)
     t = graphics.Text(rectangle.getCenter(),text) 
     t.draw(win)
+    tList.append(t)
     return 0
 
 
@@ -150,5 +158,3 @@ def printGridTags(tags):
             print "/" 
         print tag, "\t",
     print ""
-        
-        

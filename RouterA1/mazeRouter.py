@@ -6,7 +6,7 @@ import time
 
 state = {'free':0,'obs':-1,'wire':1,'pin':2}
 
-def start(win,blocks,nets,mode):
+def start(win,blocks,nets,mode,verbose):
     """Start maze router process iterating over nets to create subnets
         BLOCK:
         PIN:
@@ -48,7 +48,7 @@ def start(win,blocks,nets,mode):
                 vertexIndex = routerGUI.getBlockInd(win,pinsVertex)
                 #If block is not already on subnet
                 if (blocks[vertexIndex][3] == 0):                
-                    pathLen, matchBlock = bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,1000,mode)
+                    pathLen, matchBlock = bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,1000,mode,verbose) #TODO: 1000 arbitrary big number
                 
                     if (matchBlock):
                         indexMatch = routerGUI.getBlockInd(win,matchBlock)
@@ -71,6 +71,9 @@ def start(win,blocks,nets,mode):
             wireLen += (pathLen-2)
         #PINS CONNECTED
         
+        if verbose:
+            routerGUI.delMarks(win,blocks)
+        
         #CONNECT ALL SUBNETS IF ANY
 
         subnetCnt = len(subnets)
@@ -82,10 +85,8 @@ def start(win,blocks,nets,mode):
             print "CENTER ", netCtr, "ANCHOR ", anchorBlock, "SUBNET ", subnetCnt
             
             tags = [0]*len(blocks)
-#             indexAnchor = routerGUI.getBlockInd(win,anchorBlock)
-#             subnetNum = blocks[indexAnchor][3]
                         
-            pathLen, matchBlock = bfsNB(win,netCtr,blocks,anchorBlock,tags,net,subnetCnt,mode)
+            pathLen, matchBlock = bfsNB(win,anchorBlock,blocks,netCtr,tags,net,subnetCnt,mode,verbose)
             print pathLen , matchBlock
             
             if (matchBlock):
@@ -167,7 +168,7 @@ def traceBack(win,trackBlk,pathLen,blocks,tags,net,subnet):
                 trackBlk = neighbour
                 break
 
-def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,subnet,mode):
+def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,subnet,mode,verbose):
     """ Breadth First search starting on pin Vertex looking for pin Source """
     
     indexPin = routerGUI.getBlockInd(win,pinsVertex)
@@ -192,7 +193,8 @@ def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,subnet,mode):
                 if (tags[indexNB] == 0):
                     if (stateNB == state['free']):
                         tags[indexNB] = tag
-                        routerGUI.markBlock(win,blocks[indexNB][0],tag)
+                        if verbose:
+                            routerGUI.markBlock(win,blocks[indexNB][0],tag)
                         blocksQueue.append(neighbour)
                         #TODO: A* tag with Manhattan distance |xc-xt|+|yc-yt|                   
                     elif (netNB == net[0]):
