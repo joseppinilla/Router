@@ -43,7 +43,7 @@ def main(argv):
             key = win.getKey() #X * 0.1s
         mazeRouter.start(win,blocks,nets,key,verbose)
         for net in nets:
-            print "Wire Len ", net[0], net[3]
+            print "Wire Len ", net.id, net.wlen
     
     
     #Stop to observe result
