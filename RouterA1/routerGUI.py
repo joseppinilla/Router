@@ -4,11 +4,9 @@ import random
 x_size = 0
 y_size = 0
 
-state = {'free':0,'obs':-1,'wire':1,'pin':2}
-
 tList = []
 
-class netClass():
+class Net():
    
     def __init__(self,idNet,color,pins):
         self.id = idNet
@@ -17,10 +15,9 @@ class netClass():
         self.wlen = 0
         self.subnets = []
         
-        
+class Block(graphics.Rectangle):
 
-
-class blockClass(graphics.Rectangle):
+    stateDict = {'free':0,'obs':-1,'wire':1,'pin':2}
     
     def __init__(self,win,p1,p2):
         self.state = 0
@@ -30,12 +27,15 @@ class blockClass(graphics.Rectangle):
         self.draw(win)
         
     def setState(self,stateStr):
-        self.state = state[stateStr]
+        self.state = self.stateDict[stateStr]
          
     def setTag(self,win,tag):
         t = graphics.Text(self.getCenter(),tag) 
         t.draw(win)
         tList.append(t)
+        
+    def isFree(self):
+        return (self.state == self.stateDict['free'])
     
 def drawRouter(fin,blocks,nets):
     """From input file:
@@ -61,13 +61,8 @@ def drawRouter(fin,blocks,nets):
         for cut2 in range(int(scale_x), int(win_max_x + 1), int(scale_x)):
     
             point1 = graphics.Point(cut2, cut)
-            point2 = graphics.Point(cut2 - scale_x, cut - scale_y)
-            #block : Rectangle, state, net, subnet
-            #block = [graphics.Rectangle(point1, point2),0,0,0]
-            #block[0].draw(win)
-            #blocks.append(block)
-            
-            blockObj = blockClass(win,point1,point2)
+            point2 = graphics.Point(cut2 - scale_x, cut - scale_y)           
+            blockObj = Block(win,point1,point2)
             blocks.append(blockObj)
             blockIndex+=1
             
@@ -76,11 +71,7 @@ def drawRouter(fin,blocks,nets):
     obs = int(fin.readline())
     for ob in range(0,obs):       
         tmpList  = fin.readline().split()
-        index = getBlockInd(win,(int(tmpList[0]),int(tmpList[1])))
-        
-        #blocks[index][0].setFill(graphics.color_rgb(0,0,255))
-        #blocks[index][1] = state['obs']
-        
+        index = getBlockInd(win,(int(tmpList[0]),int(tmpList[1])))        
         blocks[index].setFill(graphics.color_rgb(0,0,255))
         blocks[index].setState('obs')
     
@@ -97,16 +88,9 @@ def drawRouter(fin,blocks,nets):
             offset = (j*2)+1
             index = getBlockInd(win,(int(tmpList[offset]),int(tmpList[offset+1])))
             pin = (int(tmpList[offset]),int(tmpList[offset+1]))
-            #blocks[index][0].setFill(color)
             blocks[index].setFill(color)
-            
-            #markBlock(win,blocks[index][0],i+1)
             blocks[index].setTag(win,i+1)
-            
-            #blocks[index][1] = state['pin']
             blocks[index].setState('pin')
-            
-            #blocks[index][2] = i+1
             blocks[index].net = (i+1)
             
             pins.append(pin)
@@ -114,8 +98,7 @@ def drawRouter(fin,blocks,nets):
         #TODO: Sort pins different ways: [Src, closer1, closer2, closer3....], [Src, closerN, closerN-1...closer1]
         #TODO: Sort so that Source is left-top-most, center, etc.
         
-        #net = [i+1,color,pins,0,[]]
-        net = netClass(i+1,color,pins)
+        net = Net(i+1,color,pins)
         
         nets.append(net)
     
@@ -143,18 +126,11 @@ def getBlockNB(block):
     return neighbours
 
 
-def delMarks(win,blocks):
-    for mark in tList:
+def delTags(win,blocks):   
+    """Erase block tags from GUI and delete from list"""
+    while tList:
+        mark = tList.pop(0)
         mark.undraw()
-
-def markBlock(win,rectangle,text):
-    """Write tag on block"""
-    #TODO: save t text objetc to undraw later on graphics.delitem(win,t)
-    t = graphics.Text(rectangle.getCenter(),text) 
-    t.draw(win)
-    tList.append(t)
-    return 0
-
 
 def getBlockInd(win,block):
     """Convert Coordinates to BlockList Index"""
