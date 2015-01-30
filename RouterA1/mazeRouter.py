@@ -53,7 +53,7 @@ def start(win,blocks,nets,mode,verbose):
                 
                 #If block is not already on subnet
                 if (blocks[vertexIndex].subnet == 0):
-                    pathLen, matchBlock = bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,1000,mode,verbose)
+                    pathLen, matchBlock = bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode,verbose)
                 
                     if (matchBlock):
                         indexMatch = routerGUI.getBlockInd(win,matchBlock)
@@ -62,7 +62,7 @@ def start(win,blocks,nets,mode,verbose):
                         if (subnetNum):
                             #Add vertex to subnet pins list
                             net.subnets[subnetNum-1].pins.append(pinsVertex)
-                            #TODO: Explore adding matchBlock to subnet and consider for closest subnet intra-subnet route
+
                         else:
                             #Found terminal of same net. Create subnet with terminals
                             subnetNum = len(net.subnets)+1
@@ -71,46 +71,25 @@ def start(win,blocks,nets,mode,verbose):
                                  
                         if (pathLen!=0):
                             traceBack(win,matchBlock,pathLen,blocks,tags,net,subnetNum)
+                    else:
+                        print "Failed Routing"
+                        return False
+                        
                              
-            wireLen += (pathLen-2)
+                    wireLen += (pathLen-2)
         #PINS CONNECTED
         
         if verbose:
-            routerGUI.delTags(win,blocks)
-        
-        #CONNECT ALL SUBNETS IF ANY
-
-        
-
-        subnetCnt = len(net.subnets)
-        print subnetCnt, " SUBNETS!"
-        netCtr = findCenter(net.pins) #TODO: This is center of all net. Find center between subnets? Center between closest pins?
-
-        while (subnetCnt != 1) :
-            anchorBlock = closestBlock(net.subnets[subnetCnt-1].pins,netCtr)
-            print "CENTER ", netCtr, "ANCHOR ", anchorBlock, "SUBNET ", subnetCnt
-            
-            tags = [0]*len(blocks)
-                        
-            pathLen, matchBlock = bfsNB(win,anchorBlock,blocks,netCtr,tags,net,subnetCnt,mode,verbose)
-            print pathLen , matchBlock
-            
-            if (matchBlock):
-                if (pathLen!=0):
-                    traceBack(win,matchBlock,pathLen,blocks,tags,net,subnetCnt)
-        
-            subnetCnt -= 1
-        #SUBNETS CONNECTED
-        
+            routerGUI.delTags(win,blocks)      
         
         print "PINS IN NETS"         
-        for a in net.subnets:
-            print a.pins
+       
         
         net.wlen = wireLen
         print "Finished pins"
           
     print "Finished nets"
+    return True
 
 
 def closestBlock(netBlocks, targetBlock):
@@ -175,7 +154,7 @@ def traceBack(win,trackBlk,pathLen,blocks,tags,net,subnet):
              
             if (tags[indexNB]==(pathLen)):
                 blockNB.setFill(net.color)
-                blockNB.state = 'wire'
+                blockNB.setState('wire')
                 blockNB.net = net.id
                 blockNB.subnet = subnet 
                 trackBlk = neighbour
@@ -183,7 +162,7 @@ def traceBack(win,trackBlk,pathLen,blocks,tags,net,subnet):
 
 #def bfstargetNB(win,pinsSrc,blocks,pinsVertex,tags,net,subnet,mode,verbose):
 
-def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,subnet,mode,verbose):
+def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,mode,verbose):
     """ Breadth First Search starting on pin Vertex looking for same Net """
     
     indexPin = routerGUI.getBlockInd(win,pinsVertex)
@@ -211,7 +190,7 @@ def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,subnet,mode,verbose):
                 blockNB = blocks[indexNB]
                 
                 if ((tags[indexNB] == 0)):
-                    if (blocks[indexNB].isFree()):
+                    if (blockNB.isFree()):
                         tags[indexNB] = tag
                         #tagsA[indexNB] = tag  #Tag A*
                         if verbose:
@@ -219,11 +198,10 @@ def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,subnet,mode,verbose):
                         blocksQueue.append(neighbour)
                         
                     elif (blockNB.net == net.id):
-                        if (blockNB.subnet != subnet):
+                        if (blockNB.isWire() or (neighbour == pinsSrc)): #IF wire
                             return tag, neighbour
+                            
                         
-                        #TODO: Else If neighbour is same subnet and goes in same direction expand over it
-                            #blocksQueue.clear()
             
         #Run mode (clocked, stepped)
         key = win.checkKey()
@@ -241,5 +219,3 @@ def bfsNB(win,pinsSrc,blocks,pinsVertex,tags,net,subnet,mode,verbose):
             
        
     return 0, None
-
-

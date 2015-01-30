@@ -37,6 +37,9 @@ class Block(graphics.Rectangle):
     def isFree(self):
         return (self.state == self.stateDict['free'])
     
+    def isWire(self):
+        return (self.state == self.stateDict['wire'])
+        
 def drawRouter(fin,blocks,nets):
     """From input file:
         Draw grid, obstacles and net pins
@@ -122,6 +125,8 @@ def getBlockNB(block):
         neighbours.append((x-1,y))
     if x < (x_size-1):
         neighbours.append((x+1,y))
+    
+    
     
     return neighbours
 

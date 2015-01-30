@@ -1,6 +1,7 @@
 import sys
 import getopt
 import mazeRouter
+from itertools import permutations
 import routerGUI
 
 def main(argv):
@@ -12,7 +13,7 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, "hvi:", ["ifile="])
     except getopt.GetoptError:
-        print 'test.py -i <inputfile>'
+        print 'test.py [-v] -i <inputfile>'
         sys.exit(2)
 
     for opt, arg in opts:
@@ -45,7 +46,20 @@ def main(argv):
         elif (key in ('r','s','t')): #Run, Stepped, Timed
             if (key=='t'):
                 key = win.getKey() #X * 0.1s
-            mazeRouter.start(win,blocks,nets,key,verbose)
+            
+            
+            print nets
+            
+            allNets = list(permutations(nets))
+            
+            lenAll = len(allNets)
+            i=0
+            
+            print allNets[0]
+            
+            while((not mazeRouter.start(win,blocks,allNets[i],key,verbose)) and i<lenAll):
+                i += 1
+
             for net in nets:
                 print "Wire Len ", net.id, net.wlen       
                 fout = open(outputfile,'w+')
